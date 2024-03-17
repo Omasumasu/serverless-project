@@ -3,7 +3,7 @@ import type { AWS } from '@serverless/typescript';
 const serverlessConfiguration: AWS = {
   service: 'serverless-project',
   frameworkVersion: '3',
-  plugins: ['serverless-esbuild', 'serverless-offline'],
+  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dotenv-plugin'],
   provider: {
     name: 'aws',
     runtime: 'nodejs14.x',
@@ -15,16 +15,38 @@ const serverlessConfiguration: AWS = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
     },
+    httpApi: {
+      authorizers: {
+        AdminPoolAuthorizer: {
+          type: 'jwt',
+          audience: {
+            Ref: 'AdminPoolClient'
+          },
+          identitySource: '$.headers.Authorization',
+          issuerUrl: '$ISSUER_URL'
+        },
+        LocalAdminPoolAuthorizer: {
+          type: 'request',
+          functionName: 'localAdminPoolAuthorizer',
+          enableSimpleResponses: true
+        }
+      }
+    }
   },
   // import the function via paths
   functions: {
+
+    LocalAdminPoolAuthorizer: {
+        handler: 'src/authorizer/handler.localAdminPoolAuthorizer'
+    },
     getUsers: {
       handler: 'src/functions/users/handler.getUserHandler',
       events: [
         {
           http: {
             method: 'get',
-            path: 'users', 
+            path: 'users',
+            authorizer: "LocalAdminPoolAuthorizer",
           },
         },
       ]
