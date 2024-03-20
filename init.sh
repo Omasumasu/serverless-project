@@ -47,9 +47,11 @@ TOKEN=$(aws cognito-idp admin-initiate-auth \
   --client-id ${CLIENT_ID} \
   --auth-flow ADMIN_NO_SRP_AUTH \
   --auth-parameters USERNAME=${EMAIL},PASSWORD=${PASSWORD} \
-  --query "AuthenticationResult.AccessToken" \
+  --query "AuthenticationResult.IdToken" \
   --output text \
   --endpoint-url ${ENDPOINT_URL} | sed "s/\"//g")
+
+
 
 echo "TOKEN=${TOKEN}"
 echo "USER_POOL_ID=${USER_POOL_ID}"
