@@ -46,7 +46,8 @@ const serverlessConfiguration: AWS = {
           http: {
             method: 'get',
             path: 'users',
-            authorizer: "LocalAdminPoolAuthorizer",
+            // @ts-ignore
+            authorizer: '${opt:stage}' !== 'local' ? "AdminPoolAuthorizer" : "LocalAdminPoolAuthorizer",
           },
         },
       ]
