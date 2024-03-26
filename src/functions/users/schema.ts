@@ -1,22 +1,12 @@
+import {z} from "zod";
 
-export const createUserBodySchema = {
-    type: "object",
-    properties: {
-        name: { type: 'string' },
-        nickName: { type: 'string' },
-        email: { type: 'string', format: 'email' },
-    },
-    required: ['name', 'email']
-} as const;
-
-export const createUserSchema = {
-    type: "object",
-    properties: {
-        body: createUserBodySchema
-    },
-    required: ['body']
-} as const;
-
+export const createUserSchema = z.object({
+    body: z.object({
+        name: z.string(),
+        nickName: z.string().min(1).max(10).optional(),
+        email: z.string().email(),
+    })
+})
 
 export const userSchema = {
     type: "object",

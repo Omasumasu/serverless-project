@@ -31,7 +31,8 @@ const serverlessConfiguration: AWS = {
           enableSimpleResponses: true
         }
       }
-    }
+    },
+    stage: "${opt:stage, 'local'}",
   },
   // import the function via paths
   functions: {
@@ -46,8 +47,7 @@ const serverlessConfiguration: AWS = {
           http: {
             method: 'get',
             path: 'users',
-            // @ts-ignore
-            authorizer: '${opt:stage}' !== 'local' ? "AdminPoolAuthorizer" : "LocalAdminPoolAuthorizer",
+            authorizer: "LocalAdminPoolAuthorizer",
           },
         },
       ]

@@ -4,13 +4,14 @@
   "description": "Serverless aws-nodejs-typescript template",
   "main": "serverless.ts",
   "scripts": {
-    "dev": "sls offline"
+    "dev": "sls offline --stage local"
   },
   "engines": {
     "node": ">=14.15.0"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.535.0",
+    "@dannywrayuk/middy-zod-validator": "^1.1.3",
     "@middy/core": "^3.4.0",
     "@middy/http-error-handler": "^5.2.6",
     "@middy/http-event-normalizer": "^5.2.6",
@@ -20,7 +21,8 @@
     "@middy/http-router": "^5.2.6",
     "@middy/validator": "^5.2.6",
     "jsonwebtoken": "^9.0.2",
-    "jwks-rsa": "^3.1.0"
+    "jwks-rsa": "^3.1.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@serverless/typescript": "^3.0.0",
