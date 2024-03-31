@@ -57,9 +57,12 @@ registry.registerPath({
                 },
             },
         },
-        204: {
-            description: 'No content - successful operation',
+        400: {
+            description: 'Invalid input',
         },
+        403: {
+            description: 'Forbidden',
+        }
     },
 });
 
