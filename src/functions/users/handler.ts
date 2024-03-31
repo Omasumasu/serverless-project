@@ -1,6 +1,8 @@
-import {createUserSchema} from "@functions/users/schema";
+import {createUserSchema, userSchema} from "@functions/users/schema";
 import {CustomizedHandler, middyfy} from '@libs/middy';
 import {z, ZodType} from "zod";
+import {registry} from "../../registry";
+import {OpenApiGeneratorV3} from "@asteasolutions/zod-to-openapi";
 
 const getUser: CustomizedHandler = async (_) => {
     return {
@@ -29,3 +31,52 @@ const postUser: CustomizedHandler<ZodType<z.infer<typeof createUserSchema>['body
 }
 
 export const postUserHandler = middyfy(postUser, createUserSchema)
+
+
+registry.registerPath({
+    method: 'post',
+    path: '/users/',
+    description: 'Create a new user',
+    summary: 'Create a new user from information',
+    request: {
+        body: {
+            description: 'User information',
+            content: {
+                'application/json': {
+                    schema: createUserSchema,
+                },
+            },
+        }
+    },
+    responses: {
+        200: {
+            description: 'User created successfully',
+            content: {
+                'application/json': {
+                    schema: userSchema,
+                },
+            },
+        },
+        204: {
+            description: 'No content - successful operation',
+        },
+    },
+});
+
+
+const docs = new OpenApiGeneratorV3(registry.definitions).generateDocument({
+    openapi: "3.0.0",
+    info: { title: "API", version: "1.0.0" },
+});
+
+const getOpenApiSpecification: CustomizedHandler = async (_) => {
+    return {
+        statusCode: 200,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(docs)
+    }
+}
+
+export const getOpenApiSpecificationHandler = middyfy(getOpenApiSpecification)

@@ -63,6 +63,17 @@ const serverlessConfiguration: AWS = {
         },
       ]
     },
+    getOpenApiSpecification: {
+      handler: 'src/functions/users/handler.getOpenApiSpecificationHandler',
+      events: [
+        {
+          http: {
+            method: 'get',
+            path: 'openapi.json',
+          },
+        },
+      ]
+    },
   },
   package: { individually: true },
   custom: {
