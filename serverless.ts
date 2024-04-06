@@ -6,7 +6,8 @@ const serverlessConfiguration: AWS = {
   plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dotenv-plugin'],
   provider: {
     name: 'aws',
-    runtime: 'nodejs14.x',
+    runtime: 'nodejs20.x',
+    region: 'ap-northeast-1',
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
@@ -16,20 +17,57 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
     },
     httpApi: {
+      cors: true,
       authorizers: {
-        AdminPoolAuthorizer: {
+        OperatorPoolAuthorizer: {
           type: 'jwt',
           audience: {
-            Ref: 'AdminPoolClient'
+            Ref: 'OperatorUserPoolClient'
           },
-          identitySource: '$.headers.Authorization',
-          issuerUrl: '$ISSUER_URL'
+          identitySource: '$request.header.Authorization',
+          issuerUrl: {
+            'Fn::Join': [
+              '',
+              [
+                'https://cognito-idp.',
+                {
+                  Ref: 'AWS::Region'
+                },
+                '.amazonaws.com/',
+                {
+                  Ref: 'OperatorUserPool'
+                }
+              ]
+            ]
+          }
         },
-        LocalAdminPoolAuthorizer: {
+        LocalOperatorPoolAuthorizer: {
           type: 'request',
-          functionName: 'localAdminPoolAuthorizer',
+          functionName: 'LocalOperatorPoolAuthorizer',
           enableSimpleResponses: true
-        }
+        },
+        NursingCareProviderPoolAuthorizer: {
+          type: 'jwt',
+          audience: {
+              Ref: 'NursingCareProviderUserPoolClient'
+          },
+          identitySource: '$request.header.Authorization',
+          issuerUrl: {
+            'Fn::Join': [
+              '',
+              [
+                'https://cognito-idp.',
+                {
+                  Ref: 'AWS::Region'
+                },
+                '.amazonaws.com/',
+                {
+                  Ref: 'NursingCareProviderUserPool'
+                }
+              ]
+            ]
+          }
+        },
       }
     },
     stage: "${opt:stage, 'local'}",
@@ -37,17 +75,19 @@ const serverlessConfiguration: AWS = {
   // import the function via paths
   functions: {
 
-    LocalAdminPoolAuthorizer: {
-        handler: 'src/authorizer/handler.localAdminPoolAuthorizer'
+    LocalOperatorPoolAuthorizer: {
+        handler: 'src/authorizer/handler.localOperatorPoolAuthorizer'
     },
     getUsers: {
       handler: 'src/functions/users/handler.getUserHandler',
       events: [
         {
-          http: {
+          httpApi: {
             method: 'get',
-            path: 'users',
-            authorizer: "LocalAdminPoolAuthorizer",
+            path: '/users',
+            authorizer: {
+              name: 'OperatorPoolAuthorizer',
+            }
           },
         },
       ]
@@ -56,9 +96,9 @@ const serverlessConfiguration: AWS = {
       handler: 'src/functions/users/handler.postUserHandler',
       events: [
         {
-          http: {
+          httpApi: {
             method: 'post',
-            path: 'users', 
+            path: '/users',
           },
         },
       ]
@@ -67,13 +107,83 @@ const serverlessConfiguration: AWS = {
       handler: 'src/functions/users/handler.getOpenApiSpecificationHandler',
       events: [
         {
-          http: {
+          httpApi: {
             method: 'get',
-            path: 'openapi.json',
+            path: '/openapi.json',
           },
         },
       ]
     },
+  },
+  resources: {
+    Resources: {
+      OperatorUserPool: {
+        Type: 'AWS::Cognito::UserPool',
+        Properties: {
+          UserPoolName: 'OperatorUserPool',
+          UsernameAttributes: ['email'],
+          AutoVerifiedAttributes: ['email'],
+          Policies: {
+            PasswordPolicy: {
+              MinimumLength: 8,
+              RequireLowercase: true,
+              RequireNumbers: true,
+              RequireSymbols: true,
+              RequireUppercase: true,
+            },
+          },
+          Schema: [
+            {
+              Name: 'email',
+              Required: true,
+              Mutable: false,
+            },
+          ],
+        },
+      },
+      OperatorUserPoolClient: {
+          Type: 'AWS::Cognito::UserPoolClient',
+          Properties: {
+              ClientName: 'OperatorUserPoolClient',
+              UserPoolId: { Ref: 'OperatorUserPool' },
+              GenerateSecret: false,
+              ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
+          },
+      },
+      NursingCareProviderUserPool: {
+        Type: 'AWS::Cognito::UserPool',
+        Properties: {
+          UserPoolName: 'NursingCareProviderUserPool',
+          UsernameAttributes: ['email'],
+          AutoVerifiedAttributes: ['email'],
+          Policies: {
+            PasswordPolicy: {
+              MinimumLength: 8,
+              RequireLowercase: true,
+              RequireNumbers: true,
+              RequireSymbols: true,
+              RequireUppercase: true,
+            },
+          },
+          Schema: [
+            {
+              Name: 'email',
+              Required: true,
+              Mutable: false,
+            },
+          ],
+        },
+      },
+      NursingCareProviderUserPoolClient: {
+          Type: 'AWS::Cognito::UserPoolClient',
+          Properties: {
+              ClientName: 'NursingCareProviderUserPoolClient',
+              UserPoolId: { Ref: 'NursingCareProviderUserPool' },
+              GenerateSecret: false,
+              ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
+          },
+      },
+    }
   },
   package: { individually: true },
   custom: {

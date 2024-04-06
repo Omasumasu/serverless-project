@@ -29,7 +29,7 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback){
     });
 }
 
-export const localAdminPoolAuthorizer = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult> => {
+export const localOperatorPoolAuthorizer = async (event: APIGatewayTokenAuthorizerEvent): Promise<APIGatewayAuthorizerResult> => {
     const token = event.authorizationToken.replace(/^Bearer\s/, '');
     try {
         await new Promise((resolve, reject) => {

@@ -4,7 +4,8 @@
   "description": "Serverless aws-nodejs-typescript template",
   "main": "serverless.ts",
   "scripts": {
-    "dev": "sls offline --stage local"
+    "dev": "sls offline --stage local",
+    "deploy:dev": "sls deploy --aws-profile serverless-agent --stage dev"
   },
   "engines": {
     "node": ">=14.15.0"
