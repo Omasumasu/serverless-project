@@ -46,10 +46,10 @@ const serverlessConfiguration: AWS = {
           functionName: 'LocalOperatorPoolAuthorizer',
           enableSimpleResponses: true
         },
-        NursingCareProviderPoolAuthorizer: {
+        HelperPoolAuthorizer: {
           type: 'jwt',
           audience: {
-              Ref: 'NursingCareProviderUserPoolClient'
+              Ref: 'HelperUserPoolClient'
           },
           identitySource: '$request.header.Authorization',
           issuerUrl: {
@@ -62,7 +62,7 @@ const serverlessConfiguration: AWS = {
                 },
                 '.amazonaws.com/',
                 {
-                  Ref: 'NursingCareProviderUserPool'
+                  Ref: 'HelperUserPool'
                 }
               ]
             ]
@@ -117,45 +117,102 @@ const serverlessConfiguration: AWS = {
   },
   resources: {
     Resources: {
+      ServiceManagerUserPool: {
+        Type: 'AWS::Cognito::UserPool',
+        Properties: {
+          UserPoolName: 'ServiceManagerUserPool',
+          Schema: [
+            { Name: 'email', Required: true, Mutable: true },
+            { Name: 'family_name', Required: true, Mutable: true },
+            { Name: 'given_name', Required: true, Mutable: true },
+            { Name: 'custom:corporate_id', AttributeDataType: 'String', Mutable: true },
+            { Name: 'custom:facility_ids', AttributeDataType: 'String', Mutable: true }
+          ],
+          Policies: {
+            PasswordPolicy: {
+              MinimumLength: 8,
+              RequireLowercase: false,
+              RequireNumbers: false,
+              RequireSymbols: false,
+              RequireUppercase: false,
+            }
+          },
+          EmailConfiguration: {
+            // SESを使用しないデフォルトの設定
+            EmailSendingAccount: 'COGNITO_DEFAULT'
+          },
+          AdminCreateUserConfig: {
+            AllowAdminCreateUserOnly: true,
+            UnusedAccountValidityDays: 30,
+            InviteMessageTemplate: {
+              EmailSubject: "デジタルOHATアカウント作成完了通知",
+              EmailMessage: "{username}でアカウントが作成されました。仮パスワードは {####}です。\n 30日後に本パスワードの有効期限は切れます。"
+            }
+          },
+          AutoVerifiedAttributes: ['email']
+        }
+      },
+      ServiceManagerUserPoolClient: {
+        Type: 'AWS::Cognito::UserPoolClient',
+        Properties: {
+          ClientName: 'ServiceManagerUserPoolClient',
+          UserPoolId: { Ref: 'ServiceManagerUserPool' },
+          GenerateSecret: false,
+          ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
+        },
+      },
       OperatorUserPool: {
         Type: 'AWS::Cognito::UserPool',
         Properties: {
           UserPoolName: 'OperatorUserPool',
-          UsernameAttributes: ['email'],
-          AutoVerifiedAttributes: ['email'],
+          Schema: [
+            { Name: 'email', Required: true, Mutable: true },
+            { Name: 'family_name', Required: true, Mutable: true },
+            { Name: 'given_name', Required: true, Mutable: true },
+          ],
           Policies: {
             PasswordPolicy: {
               MinimumLength: 8,
-              RequireLowercase: true,
-              RequireNumbers: true,
-              RequireSymbols: true,
-              RequireUppercase: true,
-            },
+              RequireLowercase: false,
+              RequireNumbers: false,
+              RequireSymbols: false,
+              RequireUppercase: false,
+            }
           },
-          Schema: [
-            {
-              Name: 'email',
-              Required: true,
-              Mutable: false,
-            },
-          ],
-        },
+          EmailConfiguration: {
+            // SESを使用しないデフォルトの設定
+            EmailSendingAccount: 'COGNITO_DEFAULT'
+          },
+          AdminCreateUserConfig: {
+            AllowAdminCreateUserOnly: true,
+            UnusedAccountValidityDays: 30,
+            InviteMessageTemplate: {
+              EmailSubject: "デジタルOHATオペレーター向けアカウント作成完了通知",
+              EmailMessage: "{username}でアカウントが作成されました。仮パスワードは {####}です。\n 30日後に本パスワードの有効期限は切れます。"
+            }
+          },
+          AutoVerifiedAttributes: ['email']
+        }
       },
       OperatorUserPoolClient: {
-          Type: 'AWS::Cognito::UserPoolClient',
-          Properties: {
-              ClientName: 'OperatorUserPoolClient',
-              UserPoolId: { Ref: 'OperatorUserPool' },
-              GenerateSecret: false,
-              ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
-          },
+        Type: 'AWS::Cognito::UserPoolClient',
+        Properties: {
+          ClientName: 'OperatorUserPoolClient',
+          UserPoolId: { Ref: 'OperatorUserPool' },
+          GenerateSecret: false,
+          ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
+        },
       },
-      NursingCareProviderUserPool: {
+      HelperUserPool: {
         Type: 'AWS::Cognito::UserPool',
         Properties: {
-          UserPoolName: 'NursingCareProviderUserPool',
-          UsernameAttributes: ['email'],
-          AutoVerifiedAttributes: ['email'],
+          UserPoolName: 'HelperUserPool',
+          Schema: [
+            { Name: 'username', AttributeDataType: 'String', Mutable: false },
+            { Name: 'family_name', Required: true, Mutable: true },
+            { Name: 'given_name', Required: true, Mutable: true },
+            { Name: 'custom:facility_ids', AttributeDataType: 'String', Mutable: true }
+          ],
           Policies: {
             PasswordPolicy: {
               MinimumLength: 8,
@@ -163,22 +220,28 @@ const serverlessConfiguration: AWS = {
               RequireNumbers: true,
               RequireSymbols: true,
               RequireUppercase: true,
-            },
+            }
           },
-          Schema: [
-            {
-              Name: 'email',
-              Required: true,
-              Mutable: false,
-            },
-          ],
-        },
+          AdminCreateUserConfig: {
+            AllowAdminCreateUserOnly: false,
+            UnusedAccountValidityDays: 30,
+            InviteMessageTemplate: {
+              EmailSubject: "新しいヘルパーアカウントの初期パスワード",
+              EmailMessage: "新しいヘルパーアカウントが作成されました。アカウントIDは{username}です。初期パスワードは{####}です。このパスワードを指定されたヘルパーに安全に伝えてください。"
+            }
+          },
+          EmailConfiguration: {
+            // SESを使用しないデフォルトの設定
+            EmailSendingAccount: 'COGNITO_DEFAULT'
+          },
+          AutoVerifiedAttributes: ['email']
+        }
       },
-      NursingCareProviderUserPoolClient: {
+      HelperUserPoolClient: {
           Type: 'AWS::Cognito::UserPoolClient',
           Properties: {
-              ClientName: 'NursingCareProviderUserPoolClient',
-              UserPoolId: { Ref: 'NursingCareProviderUserPool' },
+              ClientName: 'HelperUserPoolClient',
+              UserPoolId: { Ref: 'HelperUserPool' },
               GenerateSecret: false,
               ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
           },
