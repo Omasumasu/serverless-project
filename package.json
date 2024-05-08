@@ -22,13 +22,14 @@
     "@middy/http-response-serializer": "^5.2.6",
     "@middy/http-router": "^5.2.6",
     "@middy/validator": "^5.2.6",
+    "aws-sdk": "^2.1615.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@serverless/typescript": "^3.0.0",
-    "@types/aws-lambda": "^8.10.71",
+    "@types/aws-lambda": "^8.10.137",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^14.14.25",
     "ajv-cmd": "^0.3.4",
