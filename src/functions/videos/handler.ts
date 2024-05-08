@@ -4,7 +4,7 @@ import {S3} from "aws-sdk";
 import {uploadVideoSchema} from "@functions/videos/shema";
 
 const s3 = new S3();
-const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket';
+const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket-x125xy';
 
 const uploadVideo: CustomizedHandler<ZodType<z.infer<typeof uploadVideoSchema>['body']>> = async (event) => {
     try {

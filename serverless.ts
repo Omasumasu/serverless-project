@@ -143,7 +143,7 @@ const serverlessConfiguration: AWS = {
             Bucket: {
               Type: 'AWS::S3::Bucket',
               Properties: {
-                BucketName: 'sample-bucket'
+                BucketName: 'sample-bucket-x125xy'
               }
             },
             ServiceManagerUserPool: {
