@@ -283,8 +283,9 @@ const serverlessConfiguration: AWS = {
             bundle: true,
             minify: false,
             sourcemap: true,
-            exclude: ['aws-sdk'],
-            target: 'node14',
+            // 'aws-sdk'を含める
+            exclude: [],
+            target: 'node20',
             define: {'require.resolve': undefined},
             platform: 'node',
             concurrency: 10,

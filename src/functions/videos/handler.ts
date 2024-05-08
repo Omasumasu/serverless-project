@@ -8,14 +8,7 @@ const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket-x125xy';
 
 const uploadVideo: CustomizedHandler<ZodType<z.infer<typeof uploadVideoSchema>['body']>> = async (event) => {
     try {
-        const { data, key } = event.body
-
-        if (!data || !key) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ message: 'Invalid input data' }),
-            };
-        }
+        const { data, key } = event.body;
 
         const buffer = Buffer.from(data, 'base64');
 
