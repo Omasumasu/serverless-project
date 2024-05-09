@@ -128,6 +128,7 @@ const serverlessConfiguration: AWS = {
         },
         uploadVideo: {
             handler: 'src/functions/videos/handler.uploadVideoHandler',
+            role: { 'Fn::GetAtt': ['LambdaExecutionRole', 'Arn'] },
             events: [
                 {
                     httpApi: {
@@ -140,11 +141,74 @@ const serverlessConfiguration: AWS = {
     },
     resources: {
         Resources: {
+            LambdaExecutionRole: {
+                Type: 'AWS::IAM::Role',
+                Properties: {
+                    RoleName: 'LambdaExecutionRole',
+                    AssumeRolePolicyDocument: {
+                        Version: '2012-10-17',
+                        Statement: [
+                            {
+                                Effect: 'Allow',
+                                Principal: {
+                                    Service: 'lambda.amazonaws.com'
+                                },
+                                Action: 'sts:AssumeRole'
+                            }
+                        ]
+                    },
+                    Policies: [
+                        {
+                            PolicyName: 'LambdaExecutionPolicy',
+                            PolicyDocument: {
+                                Version: '2012-10-17',
+                                Statement: [
+                                    {
+                                        Effect: 'Allow',
+                                        Action: ['s3:ListBucket', 's3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+                                        Resource: ['arn:aws:s3:::sample-bucket-x125xy', 'arn:aws:s3:::sample-bucket-x125xy/*']
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
             Bucket: {
-              Type: 'AWS::S3::Bucket',
-              Properties: {
-                BucketName: 'sample-bucket-x125xy'
-              }
+                Type: 'AWS::S3::Bucket',
+                Properties: {
+                    BucketName: 'sample-bucket-x125xy'
+                }
+            },
+            BucketPolicy: {
+                Type: 'AWS::S3::BucketPolicy',
+                Properties: {
+                    Bucket: { Ref: 'Bucket' },
+                    PolicyDocument: {
+                        Version: '2012-10-17',
+                        Statement: [
+                            {
+                                Effect: 'Allow',
+                                Principal: {
+                                    AWS: { 'Fn::GetAtt': ['LambdaExecutionRole', 'Arn'] }
+                                },
+                                Action: ['s3:PutObject', 's3:GetObject', 's3:DeleteObject'],
+                                Resource: ['arn:aws:s3:::sample-bucket-x125xy/*']
+                            },
+                            {
+                                Effect: 'Deny',
+                                Principal: '*',
+                                Action: ['s3:PutObject'],
+                                Resource: ['arn:aws:s3:::sample-bucket-x125xy/*'],
+                                Condition: {
+                                    StringNotEquals: {
+                                        'aws:PrincipalArn': { 'Fn::GetAtt': ['LambdaExecutionRole', 'Arn'] }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
             },
             ServiceManagerUserPool: {
                 Type: 'AWS::Cognito::UserPool',
