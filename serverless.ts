@@ -290,6 +290,9 @@ const serverlessConfiguration: AWS = {
             platform: 'node',
             concurrency: 10,
         },
+        apiGateway: {
+            binaryMediaTypes: ['multipart/form-data'],
+        }
     },
 };
 

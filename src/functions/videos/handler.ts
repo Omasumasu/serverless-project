@@ -1,36 +1,41 @@
 import {CustomizedHandler, middyfy} from "@libs/middy";
-import {z, ZodType} from "zod";
 import {S3} from "aws-sdk";
-import {uploadVideoSchema} from "@functions/videos/shema";
+import multipartBodyParser from "@middy/http-multipart-body-parser";
+
 
 const s3 = new S3();
 const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket-x125xy';
 
-const uploadVideo: CustomizedHandler<ZodType<z.infer<typeof uploadVideoSchema>['body']>> = async (event) => {
+const uploadVideo: CustomizedHandler<any> = async (event) => {
     try {
-        const { data, key } = event.body;
+        const file = event.body.file;
+        const key = event.body?.key || `videos/${file.filename}.mp4`;
 
-        const buffer = Buffer.from(data, 'base64');
+        if (!file || !file.content) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: 'ビデオファイルが不足しています' }),
+            };
+        }
 
         await s3
             .putObject({
                 Bucket: bucketName,
                 Key: key,
-                Body: buffer,
-                ContentEncoding: 'base64',
-                ContentType: 'video/mp4',
+                Body: file.content,
+                ContentType: file.contentType || 'video/mp4',
             })
             .promise();
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: 'Video uploaded successfully', key }),
+            body: JSON.stringify({ message: 'ビデオが正常にアップロードされました', key }),
         };
     } catch (error) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: 'Failed to upload video', error: error.message }),
+            body: JSON.stringify({ message: 'ビデオのアップロードに失敗しました', error: (error as Error).message }),
         };
     }
 };
-export const uploadVideoHandler = middyfy(uploadVideo)
+export const uploadVideoHandler = middyfy(uploadVideo).use(multipartBodyParser());

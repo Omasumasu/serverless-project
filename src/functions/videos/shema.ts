@@ -2,7 +2,6 @@ import {z} from "zod";
 
 export const uploadVideoSchema = z.object({
     body: z.object({
-        data: z.string().openapi({description: "The base64 encoded video data"}),
-        key: z.string().openapi({description: "The key to store the video"}),
+        file: z.string().openapi({description: "The base64 encoded video data", format: "binary"}),
     }).openapi('UploadVideoRequest')
 })
