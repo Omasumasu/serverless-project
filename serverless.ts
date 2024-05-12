@@ -166,7 +166,7 @@ const serverlessConfiguration: AWS = {
                                     {
                                         Effect: 'Allow',
                                         Action: ['s3:ListBucket', 's3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-                                        Resource: ['arn:aws:s3:::sample-bucket-x125xy', 'arn:aws:s3:::sample-bucket-x125xy/*']
+                                        Resource: ['arn:aws:s3:::sample-bucket-x125xyz', 'arn:aws:s3:::sample-bucket-x125xyz/*']
                                     }
                                 ]
                             }
@@ -177,7 +177,7 @@ const serverlessConfiguration: AWS = {
             Bucket: {
                 Type: 'AWS::S3::Bucket',
                 Properties: {
-                    BucketName: 'sample-bucket-x125xy'
+                    BucketName: 'sample-bucket-x125xyz'
                 }
             },
             BucketPolicy: {
@@ -193,13 +193,13 @@ const serverlessConfiguration: AWS = {
                                     AWS: { 'Fn::GetAtt': ['LambdaExecutionRole', 'Arn'] }
                                 },
                                 Action: ['s3:PutObject', 's3:GetObject', 's3:DeleteObject'],
-                                Resource: ['arn:aws:s3:::sample-bucket-x125xy/*']
+                                Resource: ['arn:aws:s3:::sample-bucket-x125xyz/*']
                             },
                             {
                                 Effect: 'Deny',
                                 Principal: '*',
                                 Action: ['s3:PutObject'],
-                                Resource: ['arn:aws:s3:::sample-bucket-x125xy/*'],
+                                Resource: ['arn:aws:s3:::sample-bucket-x125xyz/*'],
                                 Condition: {
                                     StringNotEquals: {
                                         'aws:PrincipalArn': { 'Fn::GetAtt': ['LambdaExecutionRole', 'Arn'] }
@@ -210,10 +210,10 @@ const serverlessConfiguration: AWS = {
                     }
                 }
             },
-            ServiceManagerUserPool: {
+            AdminUserPool: {
                 Type: 'AWS::Cognito::UserPool',
                 Properties: {
-                    UserPoolName: 'ServiceManagerUserPool',
+                    UserPoolName: 'AdminUserPool',
                     Schema: [
                         {Name: 'email', Required: true, Mutable: true},
                         {Name: 'family_name', Required: true, Mutable: true},
@@ -245,11 +245,11 @@ const serverlessConfiguration: AWS = {
                     AutoVerifiedAttributes: ['email']
                 }
             },
-            ServiceManagerUserPoolClient: {
+            AdminUserPoolClient: {
                 Type: 'AWS::Cognito::UserPoolClient',
                 Properties: {
-                    ClientName: 'ServiceManagerUserPoolClient',
-                    UserPoolId: {Ref: 'ServiceManagerUserPool'},
+                    ClientName: 'AdminUserPoolClient',
+                    UserPoolId: {Ref: 'AdminUserPool'},
                     GenerateSecret: false,
                     ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH', 'ALLOW_USER_SRP_AUTH'],
                 },

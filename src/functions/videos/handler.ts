@@ -4,12 +4,12 @@ import multipartBodyParser from "@middy/http-multipart-body-parser";
 
 
 const s3 = new S3();
-const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket-x125xy';
+const bucketName = process.env.BUCKET_NAME ?? 'sample-bucket-x125xyz';
 
 const uploadVideo: CustomizedHandler<any> = async (event) => {
     try {
         const file = event.body.file;
-        const key = event.body?.key || `videos/${file.filename}.mp4`;
+        const key = event.body?.key || `videos/${file.filename}`;
 
         if (!file || !file.content) {
             return {
