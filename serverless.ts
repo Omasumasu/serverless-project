@@ -30,6 +30,7 @@ const serverlessConfiguration: AWS = {
         },
         httpApi: {
             cors: true,
+            payload: '128MB',
             authorizers: {
                 OperatorPoolAuthorizer: {
                     type: 'jwt',
